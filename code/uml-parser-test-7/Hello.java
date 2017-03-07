@@ -1,0 +1,4 @@
+package umlparser;
+
+class Hello {
+}
