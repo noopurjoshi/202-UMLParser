@@ -129,13 +129,23 @@ public class Main {
         			} else if(childNode instanceof MethodDeclaration) {
         				MethodDeclaration md = (MethodDeclaration)childNode;
         				if(md.getModifiers() == ModifierSet.PUBLIC) {
+        					int count = 0;
         					classDiagramStringInput.append(getModifier(md.getModifiers())).append(md.getName()).append("(");
         					if(md.getParameters() != null) {
         						for (Parameter p : md.getParameters()) {
         							if(p.getType() instanceof ReferenceType) {
-        								if()
+        			                    if (((ReferenceType) p.getType()).getType() instanceof ClassOrInterfaceType) {
+        			                        String name = ((ClassOrInterfaceType) ((ReferenceType) p.getType()).getType()).getName();
+        			                        if (this.classMap.containsKey(name)) {
+        			                        	//add dependency
+        			                        }
+        			                    }
         							}
+        							if (count > 0) {
+        								classDiagramStringInput.append(", ");
+        			                }
         							classDiagramStringInput.append("");
+        							count++;
         						}
         					}
         					classDiagramStringInput.append(") : ").append(md.getType()).append("\n");
