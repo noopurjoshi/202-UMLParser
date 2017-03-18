@@ -133,19 +133,30 @@ public class Main {
         					classDiagramStringInput.append(getModifier(md.getModifiers())).append(md.getName()).append("(");
         					if(md.getParameters() != null) {
         						for (Parameter p : md.getParameters()) {
-        							if(p.getType() instanceof ReferenceType) {
-        			                    if (((ReferenceType) p.getType()).getType() instanceof ClassOrInterfaceType) {
-        			                        String name = ((ClassOrInterfaceType) ((ReferenceType) p.getType()).getType()).getName();
-        			                        if (this.classMap.containsKey(name)) {
-        			                        	//add dependency
+        							Type childNodeType = p.getType();
+        							classDiagramStringInput.append(p.getId()).append(":").append(p.getType().toString());
+        							if(childNodeType instanceof ReferenceType) {
+            							Type childNodeSubType = ((ReferenceType)childNodeType).getType();
+        			                    if (childNodeSubType instanceof ClassOrInterfaceType) {
+        			                        if(((ClassOrInterfaceType) childNodeSubType).getTypeArgs() != null) {
+        			                        	List<Type> type = ((ClassOrInterfaceType) childNodeSubType).getTypeArgs();
+        			                        	for (Type t : type) {
+        			                        		if(this.classMap.containsKey(t.toString())) {
+        			                        			buildRelationshipMap(t.toString());
+        			                        		}
+        			                        	}
+        			                        } else {
+        			                        	if(this.classMap.containsKey(childNodeSubType.toString())) {
+    			                        			buildRelationshipMap(childNodeSubType.toString());
+    			                        		}
         			                        }
         			                    }
         							}
+        							classDiagramStringInput.append("");
+        							count++;
         							if (count > 0) {
         								classDiagramStringInput.append(", ");
         			                }
-        							classDiagramStringInput.append("");
-        							count++;
         						}
         					}
         					classDiagramStringInput.append(") : ").append(md.getType()).append("\n");
@@ -220,6 +231,20 @@ public class Main {
                     relatedClassOrInterfaceDeclaration,
                     multiplicity,
                     UmlRelationShipType.AS));
+        }
+    }
+	
+	private void buildRelationshipMap(String className) {
+        ClassOrInterfaceDeclaration relatedClassOrInterfaceDeclaration = classMap.get(className);
+        String relationKey = getRelationKey(currentClassOrInterfaceDeclaration.getName(), relatedClassOrInterfaceDeclaration.getName());
+        if (relationshipMap.containsKey(relationKey)) {
+            UmlRelationship umlRelationship = relationshipMap.get(relationKey);
+        } else {
+            relationshipMap.put(relationKey, new UmlRelationship(currentClassOrInterfaceDeclaration,
+                    "",
+                    relatedClassOrInterfaceDeclaration,
+                    "",
+                    UmlRelationShipType.DEP));
         }
     }
 
