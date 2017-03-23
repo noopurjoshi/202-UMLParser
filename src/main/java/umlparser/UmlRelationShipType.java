@@ -4,7 +4,7 @@ public enum UmlRelationShipType {
     EX("<|--"),
     IM("<|.."),
     AS("--"),
-    DEP("<.."),
+    DEP("..>"),
     LOLI("()--");
 
     private String relationshipType;

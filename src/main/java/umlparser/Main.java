@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.imageio.ImageIO;
 
@@ -28,6 +29,11 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.ModifierSet;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.TypeDeclaration;
+import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.ast.expr.VariableDeclarationExpr;
+import com.github.javaparser.ast.stmt.BlockStmt;
+import com.github.javaparser.ast.stmt.ExpressionStmt;
+import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.PrimitiveType;
 import com.github.javaparser.ast.type.ReferenceType;
@@ -46,6 +52,9 @@ public class Main {
     StringBuilder relationshipString = new StringBuilder();
     ClassOrInterfaceDeclaration currentClassOrInterfaceDeclaration = null;
     Map<String, UmlRelationship> relationshipMap = new HashMap<String, UmlRelationship>();
+    Map<String, UmlRelationship> relationship1Map = new HashMap<String, UmlRelationship>();
+    Map<String, UmlRelationship> relationship2Map = new HashMap<String, UmlRelationship>();
+    List<String> listOfVariableNames = new ArrayList<String>();
     
     public static void main(String args[]) throws Exception {
     	Main main = new Main();
@@ -55,11 +64,9 @@ public class Main {
 	public void main2(String[] args) throws Exception {
 		// TODO Auto-generated method stub
 		args = new String[2];
-        int suffix = 7;
+        int suffix = 5;
         args[0] = "code/uml-parser-test-" + suffix;
         args[1] = "code/uml-parser-test-"+suffix+"/output" + suffix + ".png";
-        
-        
         
         File files = new File(args[0]);
         ArrayList<CompilationUnit> listOfCompilationUnits = new ArrayList<CompilationUnit>();
@@ -86,94 +93,129 @@ public class Main {
         
         classDiagramStringInput.append("@startuml\n");
         for (Map.Entry<String, ClassOrInterfaceDeclaration> classOrInterfaceDeclaration : classMap.entrySet()) {
+        	currentClassOrInterfaceDeclaration = classOrInterfaceDeclaration.getValue();
         	if(!(classOrInterfaceDeclaration.getValue().isInterface())) {
-        		currentClassOrInterfaceDeclaration = classOrInterfaceDeclaration.getValue();
         		classDiagramStringInput.append("class").append(" ").append(classOrInterfaceDeclaration.getValue().getName()).append("{").append("\n");
         		
         		for(Node childNode : classOrInterfaceDeclaration.getValue().getChildrenNodes()) {
         			if(childNode instanceof FieldDeclaration) {
-						Type childNodeType = ((FieldDeclaration) childNode).getType();
-						if(childNodeType instanceof ReferenceType) {
-							Type childNodeSubType = ((ReferenceType) childNodeType).getType();
-							if(childNodeSubType instanceof ClassOrInterfaceType) {
-								if(((ClassOrInterfaceType) childNodeSubType).getTypeArgs() != null) {
-									Type referenceName = ((ClassOrInterfaceType) childNodeSubType).getTypeArgs().get(0);
-									if(referenceName instanceof ReferenceType) {
-										if(classMap.containsKey(referenceName.toString())) {
-											buildRelationshipMap(((ClassOrInterfaceType)childNodeSubType).getTypeArgs().get(0).toString(), "*");
-										} else {
-											buildStringForPimitiveTypeMemberVariables((FieldDeclaration)childNode, classDiagramStringInput);
-										}
-									}
-								} else {
-									if(((ReferenceType)childNodeType).getArrayCount() > 0) {
-										if(classMap.containsKey(((ClassOrInterfaceType) childNodeSubType).toString())) {
-											buildRelationshipMap(((ClassOrInterfaceType)childNodeSubType).getName(), "*");
-										} else {
-											buildStringForPimitiveTypeMemberVariables((FieldDeclaration)childNode, classDiagramStringInput);
-										}
-									} else {
-										if(classMap.containsKey(((ClassOrInterfaceType) childNodeSubType).toString())) {
-											buildRelationshipMap(((ClassOrInterfaceType)childNodeSubType).getName(), "1");
-										} else {
-											buildStringForPimitiveTypeMemberVariables((FieldDeclaration)childNode, classDiagramStringInput);
-										}
-									}
-								}
-							} else {
-								buildStringForPimitiveTypeMemberVariables((FieldDeclaration)childNode, classDiagramStringInput);
-							}
-						} else {
-							buildStringForPimitiveTypeMemberVariables((FieldDeclaration)childNode, classDiagramStringInput);
-						}
-        			} else if(childNode instanceof MethodDeclaration) {
-        				MethodDeclaration md = (MethodDeclaration)childNode;
-        				if(md.getModifiers() == ModifierSet.PUBLIC) {
-        					int count = 0;
-        					classDiagramStringInput.append(getModifier(md.getModifiers())).append(md.getName()).append("(");
-        					if(md.getParameters() != null) {
-        						for (Parameter p : md.getParameters()) {
-        							Type childNodeType = p.getType();
-        							classDiagramStringInput.append(p.getId()).append(":").append(p.getType().toString());
-        							if(childNodeType instanceof ReferenceType) {
-            							Type childNodeSubType = ((ReferenceType)childNodeType).getType();
-        			                    if (childNodeSubType instanceof ClassOrInterfaceType) {
-        			                        if(((ClassOrInterfaceType) childNodeSubType).getTypeArgs() != null) {
-        			                        	List<Type> type = ((ClassOrInterfaceType) childNodeSubType).getTypeArgs();
-        			                        	for (Type t : type) {
-        			                        		if(this.classMap.containsKey(t.toString())) {
-        			                        			buildRelationshipMap(t.toString());
-        			                        		}
-        			                        	}
-        			                        } else {
-        			                        	if(this.classMap.containsKey(childNodeSubType.toString())) {
-    			                        			buildRelationshipMap(childNodeSubType.toString());
-    			                        		}
-        			                        }
-        			                    }
+        				if(((FieldDeclaration) childNode).getModifiers() == ModifierSet.PUBLIC ||
+        						((FieldDeclaration) childNode).getModifiers() == ModifierSet.PRIVATE) {
+        					buildFieldDeclaration(childNode);
+        				} else {
+        					Type childNodeType = ((FieldDeclaration) childNode).getType();
+        					if(childNodeType instanceof ReferenceType) {
+        						Type childNodeSubType = ((ReferenceType) childNodeType).getType();
+        						if(childNodeSubType instanceof ClassOrInterfaceType) {
+        							if(((ClassOrInterfaceType) childNodeSubType).getTypeArgs() != null) {
+        								Type referenceName = ((ClassOrInterfaceType) childNodeSubType).getTypeArgs().get(0);
+        								if(referenceName instanceof ReferenceType) {
+        									if(classMap.containsKey(referenceName.toString())) {
+        										buildRelationshipMap(((ClassOrInterfaceType)childNodeSubType).getTypeArgs().get(0).toString(), "*");
+        									}
+        								}
+        							} else {
+        								if(((ReferenceType)childNodeType).getArrayCount() > 0) {
+        									if(classMap.containsKey(((ClassOrInterfaceType) childNodeSubType).toString())) {
+        										buildRelationshipMap(((ClassOrInterfaceType)childNodeSubType).getName(), "*");
+        									}
+        								} else {
+        									if(classMap.containsKey(((ClassOrInterfaceType) childNodeSubType).toString())) {
+        										buildRelationshipMap(((ClassOrInterfaceType)childNodeSubType).getName(), "1");
+        									}
+        								}
         							}
-        							classDiagramStringInput.append("");
-        							count++;
-        							if (count > 0) {
-        								classDiagramStringInput.append(", ");
-        			                }
         						}
         					}
-        					classDiagramStringInput.append(") : ").append(md.getType()).append("\n");
         				}
-        				
+        			} else if(childNode instanceof MethodDeclaration) {
+        				if(((MethodDeclaration) childNode).getModifiers() == ModifierSet.PUBLIC ||
+        						isPublicStatic(((MethodDeclaration) childNode).getModifiers()) || isPublicAbstract(((MethodDeclaration) childNode).getModifiers())) {
+        					buildMethodDeclaration(childNode);
+        				}
         			} else if(childNode instanceof ConstructorDeclaration) {
-        				
+        				if(((ConstructorDeclaration) childNode).getModifiers() == ModifierSet.PUBLIC) {
+        					common(childNode);
+        				}
         			}
         		}		
         	} else {
-        		classDiagramStringInput.append("interface").append(" ").append(classOrInterfaceDeclaration.getValue().getName()).append("\n");
+        		classDiagramStringInput.append("interface").append(" ").append(classOrInterfaceDeclaration.getValue().getName()).append("{").append("\n");
+        		for(Node childNode : classOrInterfaceDeclaration.getValue().getChildrenNodes()) {
+        			if(childNode instanceof FieldDeclaration) {
+        				if(((FieldDeclaration) childNode).getModifiers() == ModifierSet.PUBLIC ||
+        						((FieldDeclaration) childNode).getModifiers() == ModifierSet.PRIVATE) {
+        					buildFieldDeclaration(childNode);
+        				} else {
+        					Type childNodeType = ((FieldDeclaration) childNode).getType();
+        					if(childNodeType instanceof ReferenceType) {
+        						Type childNodeSubType = ((ReferenceType) childNodeType).getType();
+        						if(childNodeSubType instanceof ClassOrInterfaceType) {
+        							if(((ClassOrInterfaceType) childNodeSubType).getTypeArgs() != null) {
+        								Type referenceName = ((ClassOrInterfaceType) childNodeSubType).getTypeArgs().get(0);
+        								if(referenceName instanceof ReferenceType) {
+        									if(classMap.containsKey(referenceName.toString())) {
+        										buildRelationshipMap(((ClassOrInterfaceType)childNodeSubType).getTypeArgs().get(0).toString(), "*");
+        									}
+        								}
+        							} else {
+        								if(((ReferenceType)childNodeType).getArrayCount() > 0) {
+        									if(classMap.containsKey(((ClassOrInterfaceType) childNodeSubType).toString())) {
+        										buildRelationshipMap(((ClassOrInterfaceType)childNodeSubType).getName(), "*");
+        									}
+        								} else {
+        									if(classMap.containsKey(((ClassOrInterfaceType) childNodeSubType).toString())) {
+        										buildRelationshipMap(((ClassOrInterfaceType)childNodeSubType).getName(), "1");
+        									}
+        								}
+        							}
+        						}
+        					}
+        				}
+        			} else if(childNode instanceof MethodDeclaration) {
+        				if(((MethodDeclaration) childNode).getModifiers() == ModifierSet.PUBLIC ||
+        						isPublicStatic(((MethodDeclaration) childNode).getModifiers()) || isPublicAbstract(((MethodDeclaration) childNode).getModifiers())) {
+        					buildMethodDeclaration(childNode);
+        				}
+        			}
+        		}
         	}
-        	classDiagramStringInput.append("} \n");        	
+        	classDiagramStringInput.append("} \n");
+        	
+        	List<ClassOrInterfaceType> listOfExtendedClasses = currentClassOrInterfaceDeclaration.getExtends();
+        	if(listOfExtendedClasses != null) {
+        		for (ClassOrInterfaceType c : listOfExtendedClasses) {
+            		if(classMap.containsKey(c.getName())) {
+            			String relationKey = c.getName() + "_" + currentClassOrInterfaceDeclaration.getName();
+            			relationship2Map.put(relationKey, new UmlRelationship(classMap.get(c.getName()),
+                                "",
+                                currentClassOrInterfaceDeclaration,
+                                "",
+                                UmlRelationShipType.EX));
+            		}
+            	}
+        	}
+        	
+        	List<ClassOrInterfaceType> listOfImplementedClasses = currentClassOrInterfaceDeclaration.getImplements();
+        	if(listOfImplementedClasses != null) {
+        		for (ClassOrInterfaceType cd : listOfImplementedClasses) {
+            		if(classMap.containsKey(cd.getName())) {
+            			String relationKey = cd.getName() + "_" + currentClassOrInterfaceDeclaration.getName();
+            			relationship2Map.put(relationKey, new UmlRelationship(classMap.get(cd.getName()),
+                                "",
+                                currentClassOrInterfaceDeclaration,
+                                "",
+                                UmlRelationShipType.IM));
+            		}
+            	}
+        	}
         }
         buildRelationShipString();
         classDiagramStringInput.append(relationshipString.toString()).append("@enduml\n");
         System.out.println("output: \n"+ classDiagramStringInput.toString());
+        for (String s : listOfVariableNames) {
+        	System.out.println("*******"+ s + "*******");
+        }
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
 		SourceStringReader reader = new SourceStringReader(classDiagramStringInput.toString());
 		String plantUmlResponse = reader.generateImage(stream);
@@ -185,31 +227,44 @@ public class Main {
 	
 	private void buildRelationShipString() {
         for (Map.Entry<String, UmlRelationship> entry : relationshipMap.entrySet()) {
-            UmlRelationship umlRelationship = entry.getValue();
-            relationshipString.append(umlRelationship.getCurrentClassOrInterfaceDeclaration().getName()).append(" ");
-            if (umlRelationship.getRelationshipType() == UmlRelationShipType.AS && umlRelationship.getCurrentClassOrInterfaceDeclarationMultiplicity().length() > 0) {
-            	relationshipString.append("\"")
-                        .append(umlRelationship.getCurrentClassOrInterfaceDeclarationMultiplicity())
-                        .append("\"");
-
-            }
-            relationshipString.append(" ").append(umlRelationship.getRelationshipType().getRelationshipType()).append(" ");
-            if (umlRelationship.getRelationshipType() == UmlRelationShipType.AS && umlRelationship.getRelatedClassOrInterfaceDeclarationMultiplicity().length() > 0) {
-
-            	relationshipString.append("\"")
-                        .append(umlRelationship.getRelatedClassOrInterfaceDeclarationMultiplicity())
-                        .append("\"");
-            }
-            relationshipString.append(" ").append(umlRelationship.getRelatedClassOrInterfaceDeclaration().getName())
-                    .append("\n");
+        	common1(entry);
+        }
+        for (Map.Entry<String, UmlRelationship> entry : relationship1Map.entrySet()) {
+        	common1(entry);
+        }
+        for (Map.Entry<String, UmlRelationship> entry : relationship2Map.entrySet()) {
+        	common1(entry);
         }
     }
+	
+	private void common1(Entry<String, UmlRelationship> entry) {
+
+        UmlRelationship umlRelationship = entry.getValue();
+        relationshipString.append(umlRelationship.getCurrentClassOrInterfaceDeclaration().getName()).append(" ");
+        if (umlRelationship.getRelationshipType() == UmlRelationShipType.AS && umlRelationship.getCurrentClassOrInterfaceDeclarationMultiplicity().length() > 0) {
+        	relationshipString.append("\"")
+                    .append(umlRelationship.getCurrentClassOrInterfaceDeclarationMultiplicity())
+                    .append("\"");
+
+        }
+        relationshipString.append(" ").append(umlRelationship.getRelationshipType().getRelationshipType()).append(" ");
+        if (umlRelationship.getRelationshipType() == UmlRelationShipType.AS && umlRelationship.getRelatedClassOrInterfaceDeclarationMultiplicity().length() > 0) {
+
+        	relationshipString.append("\"")
+                    .append(umlRelationship.getRelatedClassOrInterfaceDeclarationMultiplicity())
+                    .append("\"");
+        }
+        relationshipString.append(" ").append(umlRelationship.getRelatedClassOrInterfaceDeclaration().getName())
+                .append("\n");
+    
+	}
 	
 	private void buildStringForPimitiveTypeMemberVariables(FieldDeclaration primitiveType, StringBuilder classDiagramStringInput) {
 		classDiagramStringInput.append(getModifier(primitiveType.getModifiers()));
 		classDiagramStringInput.append(" ").append(primitiveType.getType().toString());
 		classDiagramStringInput.append(" : ").append(primitiveType.getVariables().get(0));
 		classDiagramStringInput.append("\n");
+		listOfVariableNames.add(primitiveType.getVariables().get(0).toString());
     }
 	
 	public String getModifier(int mod) {
@@ -237,10 +292,11 @@ public class Main {
 	private void buildRelationshipMap(String className) {
         ClassOrInterfaceDeclaration relatedClassOrInterfaceDeclaration = classMap.get(className);
         String relationKey = getRelationKey(currentClassOrInterfaceDeclaration.getName(), relatedClassOrInterfaceDeclaration.getName());
-        if (relationshipMap.containsKey(relationKey)) {
-            UmlRelationship umlRelationship = relationshipMap.get(relationKey);
-        } else {
-            relationshipMap.put(relationKey, new UmlRelationship(currentClassOrInterfaceDeclaration,
+        if(currentClassOrInterfaceDeclaration.isInterface() && relatedClassOrInterfaceDeclaration.isInterface()) {
+        	return;
+        }
+        if(!relationship1Map.containsKey(relationKey) && relatedClassOrInterfaceDeclaration.isInterface()){
+        	relationship1Map.put(relationKey, new UmlRelationship(currentClassOrInterfaceDeclaration,
                     "",
                     relatedClassOrInterfaceDeclaration,
                     "",
@@ -253,6 +309,189 @@ public class Main {
             return name1 + "_" + name2;
         }
         return name2 + "_" + name1;
+    }
+    
+    private void buildFieldDeclaration (Node childNode) {
+
+		Type childNodeType = ((FieldDeclaration) childNode).getType();
+		if(childNodeType instanceof ReferenceType) {
+			Type childNodeSubType = ((ReferenceType) childNodeType).getType();
+			if(childNodeSubType instanceof ClassOrInterfaceType) {
+				if(((ClassOrInterfaceType) childNodeSubType).getTypeArgs() != null) {
+					Type referenceName = ((ClassOrInterfaceType) childNodeSubType).getTypeArgs().get(0);
+					if(referenceName instanceof ReferenceType) {
+						if(classMap.containsKey(referenceName.toString())) {
+							buildRelationshipMap(((ClassOrInterfaceType)childNodeSubType).getTypeArgs().get(0).toString(), "*");
+						} else {
+							buildStringForPimitiveTypeMemberVariables((FieldDeclaration)childNode, classDiagramStringInput);
+						}
+					}
+				} else {
+					if(((ReferenceType)childNodeType).getArrayCount() > 0) {
+						if(classMap.containsKey(((ClassOrInterfaceType) childNodeSubType).toString())) {
+							buildRelationshipMap(((ClassOrInterfaceType)childNodeSubType).getName(), "*");
+						} else {
+							buildStringForPimitiveTypeMemberVariables((FieldDeclaration)childNode, classDiagramStringInput);
+						}
+					} else {
+						if(classMap.containsKey(((ClassOrInterfaceType) childNodeSubType).toString())) {
+							buildRelationshipMap(((ClassOrInterfaceType)childNodeSubType).getName(), "1");
+						} else {
+							buildStringForPimitiveTypeMemberVariables((FieldDeclaration)childNode, classDiagramStringInput);
+						}
+					}
+				}
+			} else {
+				buildStringForPimitiveTypeMemberVariables((FieldDeclaration)childNode, classDiagramStringInput);
+			}
+		} else {
+			buildStringForPimitiveTypeMemberVariables((FieldDeclaration)childNode, classDiagramStringInput);
+		}
+	
+    }
+    
+    private void buildMethodDeclaration (Node childNode) {
+
+		MethodDeclaration md = (MethodDeclaration)childNode;
+		if(md.getModifiers() == ModifierSet.PUBLIC || isPublicStatic(md.getModifiers()) || isPublicAbstract(md.getModifiers())) {
+			int count = 0;
+			for (String s : listOfVariableNames) {
+				if(md.getName().equalsIgnoreCase(("get".concat(s))) || md.getName().equalsIgnoreCase(("set".concat(s)))) {
+					return;
+				}
+			}
+			classDiagramStringInput.append(getModifier(md.getModifiers())).append(md.getName()).append("(");
+			if(md.getParameters() != null) {
+				for (Parameter p : md.getParameters()) {
+					Type childNodeType = p.getType();
+					classDiagramStringInput.append(p.getId()).append(":").append(p.getType().toString());
+					if(childNodeType instanceof ReferenceType) {
+						Type childNodeSubType = ((ReferenceType)childNodeType).getType();
+	                    if (childNodeSubType instanceof ClassOrInterfaceType) {
+	                        if(((ClassOrInterfaceType) childNodeSubType).getTypeArgs() != null) {
+	                        	List<Type> type = ((ClassOrInterfaceType) childNodeSubType).getTypeArgs();
+	                        	for (Type t : type) {
+	                        		if(this.classMap.containsKey(t.toString())) {
+	                        			buildRelationshipMap(t.toString());
+	                        		}
+	                        	}
+	                        } else {
+	                        	if(this.classMap.containsKey(childNodeSubType.toString())) {
+                        			buildRelationshipMap(childNodeSubType.toString());
+                        		}
+	                        }
+	                    }
+					}
+					classDiagramStringInput.append("");
+					count++;
+					if (count > 0) {
+						classDiagramStringInput.append(", ");
+	                }
+				}
+			}
+			classDiagramStringInput.append(") : ").append(md.getType()).append("\n");
+			if(md.getBody() != null) {
+				BlockStmt b = md.getBody();
+				if(b.getStmts() != null) {
+					for (Statement s : b.getStmts()) {
+						if(s instanceof ExpressionStmt && ((ExpressionStmt)s).getExpression() != null) {
+							if(((ExpressionStmt)s).getExpression() instanceof VariableDeclarationExpr) {
+								Type t = ((VariableDeclarationExpr)((ExpressionStmt)s).getExpression()).getType();
+								if(t instanceof ReferenceType) {
+									if(((ReferenceType) t).getType() instanceof ClassOrInterfaceType) {
+										if(((ClassOrInterfaceType)(((ReferenceType)t).getType())).getTypeArgs() != null) {
+											if(classMap.containsKey(((ClassOrInterfaceType)(((ReferenceType)t).getType())).getTypeArgs().get(0).toString())) {
+												String className = ((ClassOrInterfaceType)(((ReferenceType)t).getType())).getTypeArgs().get(0).toString();
+												ClassOrInterfaceDeclaration relatedClassOrInterfaceDeclaration = classMap.get(className);
+										        String relationKey = getRelationKey(currentClassOrInterfaceDeclaration.getName(), relatedClassOrInterfaceDeclaration.getName());
+										        if(currentClassOrInterfaceDeclaration.isInterface() && relatedClassOrInterfaceDeclaration.isInterface()) {
+										        	return;
+										        }
+										        if(!relationship1Map.containsKey(relationKey) && relatedClassOrInterfaceDeclaration.isInterface()) {
+										        	relationship1Map.put(relationKey, new UmlRelationship(currentClassOrInterfaceDeclaration,
+										                    "",
+										                    relatedClassOrInterfaceDeclaration,
+										                    "",
+										                    UmlRelationShipType.DEP));
+										        }
+											}
+										} else {
+											if(classMap.containsKey(((ClassOrInterfaceType)(((ReferenceType)t).getType())).getName())) {
+												String className = ((ClassOrInterfaceType)(((ReferenceType)t).getType())).getName();
+												ClassOrInterfaceDeclaration relatedClassOrInterfaceDeclaration = classMap.get(className);
+										        String relationKey = getRelationKey(currentClassOrInterfaceDeclaration.getName(), relatedClassOrInterfaceDeclaration.getName());
+										        if(currentClassOrInterfaceDeclaration.isInterface() && relatedClassOrInterfaceDeclaration.isInterface()) {
+										        	return;
+										        }
+										        if(!relationship1Map.containsKey(relationKey) && relatedClassOrInterfaceDeclaration.isInterface()) {
+										        	relationship1Map.put(relationKey, new UmlRelationship(currentClassOrInterfaceDeclaration,
+										                    "",
+										                    relatedClassOrInterfaceDeclaration,
+										                    "",
+										                    UmlRelationShipType.DEP));
+										        }
+											}
+										}
+									}
+								} 
+							}
+						}
+					}
+				}
+			} else {
+				classDiagramStringInput.append("\n");
+			}
+		}
+		
+	
+    }
+    
+    private boolean isPublicStatic(int mod) {
+        return (mod == 9);
+    }
+    
+    private boolean isPublicAbstract(int mod) {
+        return (mod == 1025);
+    }
+    
+    public void common(Node childNode) {
+		ConstructorDeclaration md = (ConstructorDeclaration)childNode;
+		if(md.getModifiers() == ModifierSet.PUBLIC) {
+			int count = 0;
+			classDiagramStringInput.append(getModifier(md.getModifiers())).append(md.getName()).append("(");
+			if(md.getParameters() != null) {
+				for (Parameter p : md.getParameters()) {
+					Type childNodeType = p.getType();
+					classDiagramStringInput.append(p.getId()).append(":").append(p.getType().toString());
+					if(childNodeType instanceof ReferenceType) {
+						Type childNodeSubType = ((ReferenceType)childNodeType).getType();
+	                    if (childNodeSubType instanceof ClassOrInterfaceType) {
+	                        if(((ClassOrInterfaceType) childNodeSubType).getTypeArgs() != null) {
+	                        	List<Type> type = ((ClassOrInterfaceType) childNodeSubType).getTypeArgs();
+	                        	for (Type t : type) {
+	                        		if(this.classMap.containsKey(t.toString())) {
+	                        			buildRelationshipMap(t.toString());
+	                        		}
+	                        	}
+	                        } else {
+	                        	if(this.classMap.containsKey(childNodeSubType.toString())) {
+                        			buildRelationshipMap(childNodeSubType.toString());
+                        		}
+	                        }
+	                    }
+					}
+					classDiagramStringInput.append("");
+					count++;
+					if (count > 0) {
+						classDiagramStringInput.append(", ");
+	                }
+				}
+			}
+			classDiagramStringInput.append(")").append("\n");
+		}
+		
+	
+    
     }
 
 }
