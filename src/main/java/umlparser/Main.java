@@ -19,6 +19,7 @@ import java.util.Map.Entry;
 import javax.imageio.ImageIO;
 
 import com.github.javaparser.JavaParser;
+import com.github.javaparser.ParseException;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.BodyDeclaration;
@@ -55,41 +56,22 @@ public class Main {
     Map<String, UmlRelationship> relationship1Map = new HashMap<String, UmlRelationship>();
     Map<String, UmlRelationship> relationship2Map = new HashMap<String, UmlRelationship>();
     List<String> listOfVariableNames = new ArrayList<String>();
+    ArrayList<CompilationUnit> listOfCompilationUnits = new ArrayList<CompilationUnit>();
     
     public static void main(String args[]) throws Exception {
     	Main main = new Main();
-    	main.main2(args);
+    	main.umlParser(args);
     }
 
-	public void main2(String[] args) throws Exception {
+	public void umlParser(String[] args) throws Exception {
 		// TODO Auto-generated method stub
 		args = new String[2];
-        int suffix = 5;
+        int suffix = 7;
         args[0] = "code/uml-parser-test-" + suffix;
         args[1] = "code/uml-parser-test-"+suffix+"/output" + suffix + ".png";
         
         File files = new File(args[0]);
-        ArrayList<CompilationUnit> listOfCompilationUnits = new ArrayList<CompilationUnit>();
-        for (final File file : files.listFiles()) {
-            if (file.getName().endsWith(".java") && file.isFile()) {
-                FileInputStream fileInputStream = new FileInputStream(file);                
-                CompilationUnit compilationUnit;
-                try {
-                	compilationUnit = JavaParser.parse(fileInputStream);
-                    listOfCompilationUnits.add(compilationUnit);
-                } finally {
-                	fileInputStream.close();
-                }
-            }
-        }
-        
-        for (CompilationUnit compilationUnit : listOfCompilationUnits) {
-            List<TypeDeclaration> listOfTypeDeclarations = compilationUnit.getTypes();
-            for (Node typeDeclaration : listOfTypeDeclarations) {
-                ClassOrInterfaceDeclaration classOrInterfaceDeclaration = (ClassOrInterfaceDeclaration) typeDeclaration;
-                classMap.put(classOrInterfaceDeclaration.getName(), classOrInterfaceDeclaration);
-            }
-        }
+        getCompilationUnits(files);
         
         classDiagramStringInput.append("@startuml\n");
         for (Map.Entry<String, ClassOrInterfaceDeclaration> classOrInterfaceDeclaration : classMap.entrySet()) {
@@ -223,6 +205,29 @@ public class Main {
 		InputStream imageInput = new ByteArrayInputStream(plantUmlResponseByteArray);
 		BufferedImage img = ImageIO.read(imageInput);
 		ImageIO.write(img, "png", new File(args[1]));
+	}
+	
+	private void getCompilationUnits(File files) throws Exception {
+		for (final File file : files.listFiles()) {
+            if (file.getName().endsWith(".java") && file.isFile()) {
+                FileInputStream fileInputStream = new FileInputStream(file);                
+                CompilationUnit compilationUnit;
+                try {
+                	compilationUnit = JavaParser.parse(fileInputStream);
+                    listOfCompilationUnits.add(compilationUnit);
+                } finally {
+                	fileInputStream.close();
+                }
+            }
+        }
+        
+        for (CompilationUnit compilationUnit : listOfCompilationUnits) {
+            List<TypeDeclaration> listOfTypeDeclarations = compilationUnit.getTypes();
+            for (Node typeDeclaration : listOfTypeDeclarations) {
+                ClassOrInterfaceDeclaration classOrInterfaceDeclaration = (ClassOrInterfaceDeclaration) typeDeclaration;
+                classMap.put(classOrInterfaceDeclaration.getName(), classOrInterfaceDeclaration);
+            }
+        }
 	}
 	
 	private void buildRelationShipString() {
