@@ -81,8 +81,7 @@ public class Main {
         		
         		for(Node childNode : classOrInterfaceDeclaration.getValue().getChildrenNodes()) {
         			if(childNode instanceof FieldDeclaration) {
-        				if(((FieldDeclaration) childNode).getModifiers() == ModifierSet.PUBLIC ||
-        						((FieldDeclaration) childNode).getModifiers() == ModifierSet.PRIVATE) {
+        				if(((FieldDeclaration) childNode).getModifiers() == ModifierSet.PUBLIC) {
         					buildFieldDeclaration(childNode);
         				} else {
         					Type childNodeType = ((FieldDeclaration) childNode).getType();
@@ -195,9 +194,6 @@ public class Main {
         buildRelationShipString();
         classDiagramStringInput.append(relationshipString.toString()).append("@enduml\n");
         System.out.println("output: \n"+ classDiagramStringInput.toString());
-        for (String s : listOfVariableNames) {
-        	System.out.println("*******"+ s + "*******");
-        }
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
 		SourceStringReader reader = new SourceStringReader(classDiagramStringInput.toString());
 		String plantUmlResponse = reader.generateImage(stream);
@@ -223,7 +219,6 @@ public class Main {
         
         for (CompilationUnit compilationUnit : listOfCompilationUnits) {
             List<TypeDeclaration> listOfTypeDeclarations = compilationUnit.getTypes();
-            for (Node typeDeclaration : listOfTypeDeclarations) {
                 ClassOrInterfaceDeclaration classOrInterfaceDeclaration = (ClassOrInterfaceDeclaration) typeDeclaration;
                 classMap.put(classOrInterfaceDeclaration.getName(), classOrInterfaceDeclaration);
             }
