@@ -193,7 +193,6 @@ public class Main {
         }
         buildRelationShipString();
         classDiagramStringInput.append(relationshipString.toString()).append("@enduml\n");
-        System.out.println("output: \n"+ classDiagramStringInput.toString());
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
 		SourceStringReader reader = new SourceStringReader(classDiagramStringInput.toString());
 		String plantUmlResponse = reader.generateImage(stream);
@@ -248,7 +247,7 @@ public class Main {
 
         }
         relationshipString.append(" ").append(umlRelationship.getRelationshipType().getRelationshipType()).append(" ");
-        if (umlRelationship.getRelationshipType() == UmlRelationShipType.AS && umlRelationship.getRelatedClassOrInterfaceDeclarationMultiplicity().length() > 0) {
+        if (umlRelationship.getRelationshipType() == UmlRelationShipType.AS) {
 
         	relationshipString.append("\"")
                     .append(umlRelationship.getRelatedClassOrInterfaceDeclarationMultiplicity())
