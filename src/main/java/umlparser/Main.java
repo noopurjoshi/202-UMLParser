@@ -247,7 +247,7 @@ public class Main {
 
         }
         relationshipString.append(" ").append(umlRelationship.getRelationshipType().getRelationshipType()).append(" ");
-        if (umlRelationship.getRelationshipType() == UmlRelationShipType.AS) {
+        if (umlRelationship.getRelationshipType() == UmlRelationShipType.AS && umlRelationship.getRelatedClassOrInterfaceDeclarationMultiplicity().length() > 0) {
 
         	relationshipString.append("\"")
                     .append(umlRelationship.getRelatedClassOrInterfaceDeclarationMultiplicity())
