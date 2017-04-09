@@ -192,6 +192,7 @@ public class Main {
         	}
         }
         buildRelationShipString();
+		classDiagramStringInput.append("}@enduml");
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
 		SourceStringReader reader = new SourceStringReader(classDiagramStringInput.toString());
 		String plantUmlResponse = reader.generateImage(stream);
