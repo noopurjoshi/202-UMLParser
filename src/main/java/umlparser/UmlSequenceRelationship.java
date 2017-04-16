@@ -10,12 +10,10 @@ import org.aspectj.lang.reflect.SourceLocation;
 
 @Aspect
 public class UmlSequenceRelationship {
-
-    private static List<TracingEvent> messages = new ArrayList<>();
     
     // methods in classes
-    @Before("within(*.*) && call(* *.*.*(..)) && !withincode(* *.*.main(..)) && !within(UmlSequenceRelationship)")
-    public void before3(JoinPoint thisJoinPoint) {
+    @Before("within(*.*) && call(* *.*.*(..)) && !within(* *.*.main(..)) && !within(UmlSequenceRelationship)")
+    public void beforeMethodCall(JoinPoint thisJoinPoint) {
         traceEntry(getThis(thisJoinPoint), getTarget(thisJoinPoint), thisJoinPoint.getSignature(), thisJoinPoint.getSourceLocation(), thisJoinPoint.getArgs());
     }
 
