@@ -22,6 +22,17 @@ public class UmlSequenceRelationship {
             String message = aThis + " -> " + target + " : " + signature.getName() + "(" + Arrays.deepToString(args) + ")\n" + "activate " + aThis;
         }
     }
+	
+	@AfterReturning("within(*.*) && call(* *.*.*(..)) && !withincode(* *.*.main(..)) && !within(TracingAspect)")
+    public void before4(JoinPoint thisJoinPoint) {
+        traceExit(getThis(thisJoinPoint), getTarget(thisJoinPoint), thisJoinPoint.getSignature(), thisJoinPoint.getSourceLocation(), thisJoinPoint.getArgs());
+    }
+	
+	private void traceExit(final String aThis, String target, final Signature signature, final SourceLocation sourceLocation, final Object... returnValue) {
+        if(aThis != null && target != null) {
+            String message = target + " -> " + aThis + " : return" + "(" + Arrays.deepToString(returnValue) + ")\n deactivate " + aThis;
+        }
+    }
 
     private String getTarget(JoinPoint thisJoinPoint) {
         if(thisJoinPoint == null || thisJoinPoint.getTarget() == null) return null;
