@@ -12,7 +12,7 @@ import org.aspectj.lang.reflect.SourceLocation;
 public class UmlSequenceRelationship {
     
     // methods in classes
-    @Before("within(*.*) && call(* *.*.*(..)) && !within(* *.*.main(..)) && !within(UmlSequenceRelationship)")
+    @Before("within(*.*) && call(* *.*.*(..)) && !within(UmlSequenceRelationship)")
     public void beforeMethodCall(JoinPoint thisJoinPoint) {
         traceEntry(getThis(thisJoinPoint), getTarget(thisJoinPoint), thisJoinPoint.getSignature(), thisJoinPoint.getSourceLocation(), thisJoinPoint.getArgs());
     }
@@ -23,7 +23,7 @@ public class UmlSequenceRelationship {
         }
     }
 	
-	@AfterReturning("within(*.*) && call(* *.*.*(..)) && !withincode(* *.*.main(..)) && !within(TracingAspect)")
+	@AfterReturning("within(*.*) && call(* *.*.*(..)) && !within(TracingAspect)")
     public void before4(JoinPoint thisJoinPoint) {
         traceExit(getThis(thisJoinPoint), getTarget(thisJoinPoint), thisJoinPoint.getSignature(), thisJoinPoint.getSourceLocation(), thisJoinPoint.getArgs());
     }
