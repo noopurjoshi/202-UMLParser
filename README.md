@@ -14,8 +14,11 @@ The program expects following arguments:
 * Do not include extension along with the file name, the program will generate a PNG file.
 * Ex – output
 Example:- To generate class diagram
+
 java -jar umlparser.jar class "C:\path\to\folder_name" class-diagram-output
+
 The above command will create a diagram with the following path and file name:
+
 "C:\path\to\folder_name\class-diagram-output.png"
 
 Details of libraries and tools used
