@@ -36,15 +36,15 @@ import net.sourceforge.plantuml.SourceStringReader;
 
 public class ParseToClassDiagram {
 
-	HashMap<String, ClassOrInterfaceDeclaration> classMap = new HashMap<String, ClassOrInterfaceDeclaration>();
-    StringBuilder classDiagramStringInput = new StringBuilder();
-    StringBuilder relationshipString = new StringBuilder();
-    ClassOrInterfaceDeclaration currentClassOrInterfaceDeclaration = null;
-    Map<String, UmlRelationship> associationRelationshipMap = new HashMap<String, UmlRelationship>();
-    Map<String, UmlRelationship> dependencyRelationshipMap = new HashMap<String, UmlRelationship>();
-    Map<String, UmlRelationship> relationshipMap = new HashMap<String, UmlRelationship>();
-    List<String> listOfVariableNames = new ArrayList<String>();
-    ArrayList<CompilationUnit> listOfCompilationUnits = new ArrayList<CompilationUnit>();
+	private HashMap<String, ClassOrInterfaceDeclaration> classMap = new HashMap<String, ClassOrInterfaceDeclaration>();
+    private StringBuilder classDiagramStringInput = new StringBuilder();
+    private StringBuilder relationshipString = new StringBuilder();
+    private ClassOrInterfaceDeclaration currentClassOrInterfaceDeclaration = null;
+    private Map<String, UmlRelationship> associationRelationshipMap = new HashMap<String, UmlRelationship>();
+    private Map<String, UmlRelationship> dependencyRelationshipMap = new HashMap<String, UmlRelationship>();
+    private Map<String, UmlRelationship> relationshipMap = new HashMap<String, UmlRelationship>();
+    private List<String> listOfVariableNames = new ArrayList<String>();
+    private ArrayList<CompilationUnit> listOfCompilationUnits = new ArrayList<CompilationUnit>();
     
     public void umlParser(String[] args) throws Exception {
         
@@ -172,7 +172,6 @@ public class ParseToClassDiagram {
         }
         buildRelationShipString();
         classDiagramStringInput.append(relationshipString.toString()).append("@enduml\n");
-        System.out.println("output: \n"+ classDiagramStringInput.toString());
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
 		SourceStringReader reader = new SourceStringReader(classDiagramStringInput.toString());
 		String plantUmlResponse = reader.generateImage(stream);
