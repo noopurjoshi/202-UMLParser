@@ -1,4 +1,5 @@
-Java UML Parser
+Java UML Parser -
+
 A parser which takes Java source code as input and provides a UML Class Diagram as the output.
 
 Compile Instructions
@@ -11,7 +12,7 @@ The program expects following arguments:
 2. Name of output file
 * File name of the output png file. The file will be created at the same folder as Path given in second argument.
 * Do not include extension along with the file name, the program will generate a PNG file.
-* Ex – output
+* Ex â€“ output
 Example:- To generate class diagram
 java -jar umlparser.jar class "C:\path\to\folder_name" class-diagram-output
 
